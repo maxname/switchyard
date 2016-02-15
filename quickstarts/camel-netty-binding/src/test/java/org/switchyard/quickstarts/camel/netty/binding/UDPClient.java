@@ -31,7 +31,7 @@ public class UDPClient {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         System.out.print("Message body to send over UDP: ");
         byte[] datagramBody = reader.readLine().getBytes();
-        DatagramPacket packet = new DatagramPacket(datagramBody, 0, datagramBody.length, group, 3940);
+        DatagramPacket packet = new DatagramPacket(datagramBody, 0, datagramBody.length, group, 13940);
         clientSocket.send(packet);
 
         Thread.sleep(100);

@@ -24,7 +24,7 @@ import java.net.Socket;
 public class TCPUnsecuredClient {
 
     public static void main(String[] args) throws Exception {
-        Socket clientSocket = new Socket("localhost", 3939);
+        Socket clientSocket = new Socket("localhost", 13939);
         DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));

@@ -81,7 +81,7 @@ public class CamelNettyBindingTest {
 
         SSLSocketFactory sf = context.getSocketFactory();
 
-        Socket clientSocket = sf.createSocket("localhost", 3939);
+        Socket clientSocket = sf.createSocket("localhost", 13939);
         DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
         // lets write payload directly as bytes to avoid encoding mismatches
         outputStream.write(PAYLOAD.getBytes());
@@ -107,7 +107,7 @@ public class CamelNettyBindingTest {
         MulticastSocket clientSocket = new MulticastSocket();
         InetAddress group = InetAddress.getByName("localhost");
         byte[] datagramBody = PAYLOAD.getBytes(Charset.defaultCharset());
-        DatagramPacket packet = new DatagramPacket(datagramBody, 0, datagramBody.length, group, 3940);
+        DatagramPacket packet = new DatagramPacket(datagramBody, 0, datagramBody.length, group, 13940);
         clientSocket.send(packet);
 
         // sleep a bit to receive message on camel side

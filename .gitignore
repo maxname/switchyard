@@ -1,4 +1,5 @@
 target
+.idea
 .classpath
 .project
 .settings
@@ -7,3 +8,4 @@ target
 *.iml
 *.ipr
 *.iws
+build-output.log
