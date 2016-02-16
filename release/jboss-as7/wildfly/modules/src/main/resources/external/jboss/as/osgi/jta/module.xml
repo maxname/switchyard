@@ -18,7 +18,7 @@
         <!-- no resources since we bring in "javax.transaction.api" as a dependency of "org.switchyard.component.common.knowledge" --> 
     </resources>
     <dependencies>
-        <!-- eclipse compiler found in "org.jboss.as.web" for eap, but found below for wildfly; we reference and export it here as a useful hook -->
-        <module name="io.undertow.jasper-jdt" export="true" optional="false"/>
+        <!-- eclipse compiler found in "org.jboss.as.web" for eap, but found below for wildfly !8.2.1!; we reference and export it here as a useful hook -->
+        <module name="io.undertow.jsp" export="true" optional="false"/>
     </dependencies>
 </module>
