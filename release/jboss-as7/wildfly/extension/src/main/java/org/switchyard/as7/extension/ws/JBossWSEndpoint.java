@@ -14,18 +14,10 @@
  
 package org.switchyard.as7.extension.ws;
 
-import java.net.URL;
-import java.util.Map;
-import java.util.ServiceLoader;
-
-import javax.xml.ws.WebServiceException;
-
-import org.jboss.as.security.plugins.SecurityDomainContext;
-import org.jboss.as.webservices.security.SecurityDomainContextAdaptor;
-import org.jboss.logging.Logger;
 import org.jboss.as.web.host.ServletBuilder;
 import org.jboss.as.web.host.WebDeploymentBuilder;
 import org.jboss.as.web.host.WebDeploymentController;
+import org.jboss.logging.Logger;
 import org.jboss.wsf.spi.classloading.ClassLoaderProvider;
 import org.jboss.wsf.spi.deployment.WSFServlet;
 import org.jboss.wsf.spi.metadata.webservices.JBossWebservicesFactory;
@@ -44,6 +36,11 @@ import org.switchyard.component.soap.WebServicePublishException;
 import org.switchyard.component.soap.config.model.EndpointConfigModel;
 import org.switchyard.component.soap.config.model.SOAPBindingModel;
 import org.switchyard.component.soap.endpoint.BaseWebService;
+
+import javax.xml.ws.WebServiceException;
+import java.net.URL;
+import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
  * Wrapper for JBossWS endpoints.
@@ -96,16 +93,14 @@ public class JBossWSEndpoint implements Endpoint {
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.error("Unable to load jboss-webservices metadata", e);
                     }
-                    jbwsMetadata = new JBossWebservicesMetaData(jbwsURL);
-                    jbwsMetadata.setConfigFile(configFile);
+                    jbwsMetadata = new JBossWebservicesMetaData(contextRoot, null, configFile, jbwsURL, null, null, null);
                 }
             }
             String configName = epcModel.getConfigName();
             if (configName != null) {
                 if (jbwsMetadata == null) {
-                    jbwsMetadata = new JBossWebservicesMetaData(null);
+                    jbwsMetadata = new JBossWebservicesMetaData(contextRoot, configName, null, null, null, null, null);
                 }
-                jbwsMetadata.setConfigName(configName);
             }
         }
         ClassLoader tccl = Classes.getTCCL();

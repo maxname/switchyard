@@ -14,13 +14,6 @@
  
 package org.switchyard.as7.extension.ws;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.xml.ws.WebServiceFeature;
-import javax.xml.ws.soap.AddressingFeature;
-import javax.xml.ws.soap.MTOMFeature;
-
 import org.jboss.logging.Logger;
 import org.jboss.wsf.spi.metadata.webservices.PortComponentMetaData;
 import org.jboss.wsf.spi.metadata.webservices.WebserviceDescriptionMetaData;
@@ -31,6 +24,13 @@ import org.switchyard.component.soap.InboundHandler;
 import org.switchyard.component.soap.WebServicePublishException;
 import org.switchyard.component.soap.config.model.SOAPBindingModel;
 import org.switchyard.component.soap.endpoint.AbstractEndpointPublisher;
+
+import javax.xml.ws.RespectBindingFeature;
+import javax.xml.ws.WebServiceFeature;
+import javax.xml.ws.soap.AddressingFeature;
+import javax.xml.ws.soap.MTOMFeature;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Handles publishing of Webservice Endpoints on JBossWS stack.
@@ -54,34 +54,57 @@ public class JBossWSEndpointPublisher extends AbstractEndpointPublisher {
             Map<String,String> map = new HashMap<String, String>();
             map.put("/" + config.getPort().getServiceName(), SEI);
 
-            WebservicesMetaData wsMetadata = new WebservicesMetaData();
-            WebserviceDescriptionMetaData wsDescMetaData = new WebserviceDescriptionMetaData(wsMetadata);
-            wsDescMetaData.setWsdlFile(getWsdlLocation());
-            PortComponentMetaData portComponent = new PortComponentMetaData(wsDescMetaData);
-            portComponent.setPortComponentName(config.getServiceName() 
-                                                + ":" + config.getPort().getServiceQName().getLocalPart() 
-                                                + ":" + config.getPort().getPortQName().getLocalPart()); //unique ID
-            portComponent.setServiceEndpointInterface(SEI);
-            portComponent.setWsdlPort(config.getPort().getPortQName());
-            portComponent.setWsdlService(config.getPort().getServiceQName());
-             // Should be the WSDL's service name and not the SwitchYard config's service name
-            portComponent.setServletLink(config.getPort().getServiceQName().getLocalPart());
+            boolean addrFeatureEnabled = false;
+            boolean addrFeatureRequired = false;
+            String addrFeatureType = "ANONYMOUS";
+            boolean mtomFeatureEnabled = false;
+            int mtomFeatureThreshold = 0;
+
+            boolean respectFeatureEnable = false;
 
             for (WebServiceFeature feature : features) {
                 if (feature instanceof AddressingFeature) {
                     AddressingFeature addrFeature = (AddressingFeature)feature;
-                    portComponent.setAddressingEnabled(addrFeature.isEnabled());
-                    portComponent.setAddressingRequired(addrFeature.isRequired());
+                    addrFeatureEnabled = addrFeature.isEnabled();
+                    addrFeatureRequired = addrFeature.isRequired();
+                    addrFeatureType = addrFeature.getResponses() == null ? addrFeatureType : addrFeature.getResponses().name();
                     LOGGER.info("Addressing [enabled = " + addrFeature.isEnabled() + ", required = " + addrFeature.isRequired() + "]");
                 } else if (feature instanceof MTOMFeature) {
                     MTOMFeature mtom = (MTOMFeature)feature;
-                    portComponent.setMtomEnabled(mtom.isEnabled());
-                    portComponent.setMtomThreshold(mtom.getThreshold());
+                    mtomFeatureEnabled = mtom.isEnabled();
+                    mtomFeatureThreshold = mtom.getThreshold();
                     LOGGER.info("MTOM [enabled = " + mtom.isEnabled() + ", threshold = " + mtom.getThreshold() + "]");
+                } else if (feature instanceof RespectBindingFeature) {
+                    respectFeatureEnable = feature.isEnabled();
                 }
             }
-            wsDescMetaData.addPortComponent(portComponent);
-            wsMetadata.addWebserviceDescription(wsDescMetaData);
+
+
+            String portComponentName = config.getServiceName()
+                    + ":" + config.getPort().getServiceQName().getLocalPart()
+                    + ":" + config.getPort().getPortQName().getLocalPart();
+
+            PortComponentMetaData portComponent = new PortComponentMetaData(
+                    portComponentName,
+                    config.getPort().getPortQName(),
+                    SEI,
+                    null,
+                    config.getPort().getServiceQName().getLocalPart(),
+                    null,
+                    getContextRoot(),
+                    addrFeatureEnabled,
+                    addrFeatureRequired,
+                    addrFeatureType,
+                    mtomFeatureEnabled,
+                    mtomFeatureThreshold,
+                    respectFeatureEnable,
+                    config.getPort().getServiceQName(),
+                    null,
+                    null
+                    );
+
+            WebserviceDescriptionMetaData wsDescMetaData = new WebserviceDescriptionMetaData(config.getName(), getWsdlLocation(), null, portComponent);
+            WebservicesMetaData wsMetadata = new WebservicesMetaData(null, wsDescMetaData);
 
             wsEndpoint = new JBossWSEndpoint();
             if (config.getContextPath() != null) {
