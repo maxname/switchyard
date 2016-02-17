@@ -14,19 +14,6 @@
 package org.switchyard.security.jboss.provider;
 
 
-import java.security.AccessController;
-import java.security.Principal;
-import java.security.PrivilegedAction;
-import java.security.acl.Group;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import javax.security.auth.Subject;
-
-
 import org.jboss.security.RunAs;
 import org.jboss.security.RunAsIdentity;
 import org.jboss.security.SecurityContextAssociation;
@@ -37,18 +24,25 @@ import org.jboss.security.identity.RoleGroup;
 import org.jboss.security.identity.extensions.CredentialIdentityFactory;
 import org.jboss.security.identity.plugins.SimpleRoleGroup;
 import org.jboss.security.mapping.MappingResult;
-import org.picketlink.identity.federation.bindings.jboss.auth.mapping.STSGroupMappingProvider;
-import org.picketlink.identity.federation.bindings.jboss.auth.mapping.STSPrincipalMappingProvider;
 import org.picketlink.identity.federation.core.wstrust.auth.AbstractSTSLoginModule;
 import org.switchyard.ServiceSecurity;
 import org.switchyard.security.context.SecurityContext;
 import org.switchyard.security.credential.AssertionCredential;
 import org.switchyard.security.jboss.JBossSecurityLogger;
+import org.switchyard.security.jboss.bindings.mapping.CustomSTSGroupMappingProvider;
+import org.switchyard.security.jboss.bindings.mapping.CustomSTSPrincipalMappingProvider;
 import org.switchyard.security.principal.GroupPrincipal;
 import org.switchyard.security.principal.RolePrincipal;
 import org.switchyard.security.principal.UserPrincipal;
 import org.switchyard.security.provider.DefaultSecurityProvider;
 import org.w3c.dom.Element;
+
+import javax.security.auth.Subject;
+import java.security.AccessController;
+import java.security.Principal;
+import java.security.PrivilegedAction;
+import java.security.acl.Group;
+import java.util.*;
 
 /**
  * JBossSecurityProvider.
@@ -96,7 +90,7 @@ public class JBossSecurityProvider extends DefaultSecurityProvider {
                     boolean sts_mapped = false;
                     Map<String, Object> contextMap = new HashMap<String, Object>();
                     contextMap.put(AbstractSTSLoginModule.SHARED_TOKEN, assertionElement);
-                    STSPrincipalMappingProvider principalMapper = new STSPrincipalMappingProvider();
+                    CustomSTSPrincipalMappingProvider principalMapper = new CustomSTSPrincipalMappingProvider();
                     principalMapper.init(contextMap);
                     MappingResult<Principal> principalResult = new MappingResult<Principal>();
                     principalMapper.setMappingResult(principalResult);
@@ -106,7 +100,7 @@ public class JBossSecurityProvider extends DefaultSecurityProvider {
                         sts_subject.getPrincipals().add(new UserPrincipal(principal.getName()));
                         sts_mapped = true;
                     }
-                    STSGroupMappingProvider rolesMapper = new STSGroupMappingProvider();
+                    CustomSTSGroupMappingProvider rolesMapper = new CustomSTSGroupMappingProvider();
                     rolesMapper.init(contextMap);
                     MappingResult<RoleGroup> rolesResult = new MappingResult<RoleGroup>();
                     rolesMapper.setMappingResult(rolesResult);
