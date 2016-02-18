@@ -64,5 +64,8 @@
         <module name="org.jboss.resteasy.resteasy-jaxrs"/>
         <module name="org.jboss.ws.jaxws-client" export="true"/>
         <module name="org.wildfly.extension.undertow" />
+        <module name="io.undertow.core"/>
+        <module name="org.jboss.ws.cxf.jbossws-cxf-transports-undertow"/>
+        <module name="org.jboss.ws.jaxws-undertow-httpspi"/>
     </dependencies>
 </module>

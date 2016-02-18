@@ -251,12 +251,12 @@
         </dependency>
         <dependency>
             <groupId>org.jboss.ws.cxf</groupId>
-            <artifactId>jbossws-cxf-transports-httpserver</artifactId>
+            <artifactId>jbossws-cxf-transports-undertow</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.ws.projects</groupId>
-            <artifactId>jaxws-jboss-httpserver-httpspi</artifactId>
+            <artifactId>jaxws-undertow-httpspi</artifactId>
         </dependency>
         <dependency>
             <groupId>org.picketbox</groupId>
@@ -266,6 +266,34 @@
     </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-direct-dependencies</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <illegalTransitiveDependencyCheck implementation="de.is24.maven.enforcer.rules.IllegalTransitiveDependencyCheck">
+                                    <reportOnly>${illegaltransitivereportonly}</reportOnly>
+                                    <regexIgnoredClasses>
+                                        <regexIgnoredClass>io\.undertow\.server\..+</regexIgnoredClass>
+                                        <regexIgnoredClass>com\.sun\.net\.httpserver\..+</regexIgnoredClass>
+                                        <regexIgnoredClass>javax\..+</regexIgnoredClass>
+                                        <regexIgnoredClass>org\.w3c\.dom\..+</regexIgnoredClass>
+                                        <regexIgnoredClass>org\.xml\.sax\..+</regexIgnoredClass>
+                                    </regexIgnoredClasses>
+                                    <useClassesFromLastBuild>true</useClassesFromLastBuild>
+                                </illegalTransitiveDependencyCheck>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -281,6 +309,7 @@
                                 <copy todir="${common.sources.dir}">
                                     <fileset dir="../../extension/src/main/java/" includes="**/*.java">
                                         <exclude name="org/switchyard/as7/extension/SwitchYardModuleAdd.java"/>
+                                        <exclude name="org/switchyard/as7/extension/camel/cxf/HttpServerDestination.java"/>
                                         <exclude name="org/switchyard/as7/extension/cluster/RemoteEndpointListener.java"/>
                                         <exclude name="org/switchyard/as7/extension/deployment/SwitchYardCdiIntegrationProcessor.java"/>
                                         <exclude name="org/switchyard/as7/extension/deployment/SwitchYardDeployment.java"/>
@@ -291,8 +320,6 @@
                                         <exclude name="org/switchyard/as7/extension/resteasy/RESTEasyResource.java"/>
                                         <exclude name="org/switchyard/as7/extension/resteasy/RESTEasyResourcePublisher.java"/>
                                         <exclude name="org/switchyard/as7/extension/util/ServerUtil.java"/>
-                                        <exclude name="org/switchyard/as7/extension/ws/JBossWSEndpoint.java"/>
-                                        <exclude name="org/switchyard/as7/extension/ws/JBossWSEndpointPublisher.java"/>
                                     </fileset>
                                 </copy>
                                 <copy todir="${common.resources.dir}">
