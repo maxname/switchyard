@@ -1,0 +1,17 @@
+
+[Errors]
+bpel-xts-subordinate-wsba (тест не разворачивается)
+bpel-xts-wsat (тест не разворачивается)
+camel-sql-binding (похоже, кривой коннект к бд (cannot connect error))
+transform-xslt - WildFly Error, fix - https://issues.jboss.org/browse/WFCORE-519
+
+[Not Checked]
+camel-ftp-binding
+camel-mqtt-binding (camel-jms-binding работает, не понял смысла проверять ActiveMQ)
+camel-rss-binding
+camel-sap-binding
+jca-inflow-activemq
+jca-outbound-activemq
+
+[Recheck]
+camel-cxf-binding

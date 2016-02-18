@@ -31,13 +31,12 @@
                 </mail:consume>
             </mail:binding.mail>
 	    -->
-            <mail:binding.mail xmlns:mail="urn:switchyard-component-camel-mail:config:1.0">
-                <mail:host>localhost</mail:host>
-                <mail:username>camel</mail:username>
+            <mail:binding.mail xmlns:mail="urn:switchyard-component-camel-mail:config:1.0" secure="true">
+                <mail:host>imap.gmail.com</mail:host>
+                <mail:username>switchyard.test.sc</mail:username>
+                <mail:password>!qaz@wsx</mail:password>
                 <mail:consume accountType="imap">
-                    <mail:initialDelay>0</mail:initialDelay>
-                    <mail:delay>100</mail:delay>
-                    <mail:copyTo>after-processing</mail:copyTo>
+                    <mail:folderName>inbox</mail:folderName>
                 </mail:consume>
             </mail:binding.mail>
         </service>
@@ -59,13 +58,15 @@
                 </mail:produce>
             </mail:binding.mail>
             -->
-            <mail:binding.mail xmlns:mail="urn:switchyard-component-camel-mail:config:1.0">
-                <mail:host>localhost</mail:host>
-                <mail:username>camel</mail:username>
+            <mail:binding.mail xmlns:mail="urn:switchyard-component-camel-mail:config:1.0" secure="true">
+                <mail:host>smtp.gmail.com</mail:host>
+                <mail:port>465</mail:port>
+                <mail:username>switchyard.test.sc@gmail.com</mail:username>
+                <mail:password>!qaz@wsx</mail:password>
                 <mail:produce>
                     <mail:subject>Forwarded message</mail:subject>
-                    <mail:from>camel@localhost</mail:from>
-                    <mail:to>rider@camel</mail:to>
+                    <mail:from>switchyard.test.sc@gmail.com</mail:from>
+                    <mail:to>ozinoviev@solit-clouds.ru</mail:to>
                 </mail:produce>
             </mail:binding.mail>
         </reference>
