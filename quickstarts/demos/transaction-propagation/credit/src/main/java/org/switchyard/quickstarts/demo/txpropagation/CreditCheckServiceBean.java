@@ -16,13 +16,16 @@
  */
 package org.switchyard.quickstarts.demo.txpropagation;
 
-import javax.inject.Inject;
-
+import org.jboss.logging.Logger;
 import org.switchyard.component.bean.Reference;
 import org.switchyard.component.bean.Service;
 
+import javax.inject.Inject;
+
 @Service(CreditCheckService.class)
 public class CreditCheckServiceBean implements CreditCheckService {
+
+    private final Logger logger = Logger.getLogger(CreditCheckServiceBean.class);
 
     @Inject
     @Reference
@@ -34,9 +37,14 @@ public class CreditCheckServiceBean implements CreditCheckService {
 
     @Override
     public Application checkCredit(Offer offer) {
-        Application app = checkRule.checkCredit(offer);
-        applicationLogger.store(app);
-        return app;
+        try {
+            Application app = checkRule.checkCredit(offer);
+            applicationLogger.store(app);
+            return app;
+        } catch (RuntimeException e) {
+            logger.error("Oops", e);
+            throw e;
+        }
     }
 
 }

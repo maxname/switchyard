@@ -16,15 +16,18 @@
  */
 package org.switchyard.quickstarts.demo.txpropagation;
 
+import org.jboss.logging.Logger;
+import org.switchyard.component.bean.Reference;
+import org.switchyard.component.bean.Service;
+
 import javax.inject.Inject;
 import javax.naming.InitialContext;
 import javax.transaction.UserTransaction;
 
-import org.switchyard.component.bean.Reference;
-import org.switchyard.component.bean.Service;
-
 @Service(Dealer.class)
 public class DealerBean implements Dealer {
+
+    private final Logger logger = Logger.getLogger(DealerBean.class);
 
     @Inject
     @Reference
@@ -36,35 +39,40 @@ public class DealerBean implements Dealer {
 
     @Override
     public Deal offer(Offer offer) {
-        System.out.println("Dealer Service : Received an offer");
-        Deal deal = new Deal();
-        deal.setOffer(offer);
+        try {
+            System.out.println("Dealer Service : Received an offer");
+            Deal deal = new Deal();
+            deal.setOffer(offer);
 
-        // If the offer is more than 10% off, then reject it
-        if (offer.getCar().getPrice() * .9 > offer.getAmount()) {
-            deal.setAccepted(false);
-            return deal;
-        }
-
-        System.out.println("Dealer Service : Checking Credit");
-        // Check credit of applicant
-        Application creditReply = creditService.checkCredit(offer);
-        offer.getApplication().setApproved(creditReply.isApproved());
-        deal.setAccepted(creditReply.isApproved());
-
-        if (!deal.isAccepted()) {
-            try {
-                UserTransaction tx = (UserTransaction) new InitialContext().lookup("java:jboss/UserTransaction");
-                tx.setRollbackOnly();
-                System.out.println("Dealer Service : Low credit score - transaction has been rolled back");
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to rollback transaction", e);
+            // If the offer is more than 10% off, then reject it
+            if (offer.getCar().getPrice() * .9 > offer.getAmount()) {
+                deal.setAccepted(false);
+                return deal;
             }
-        } else {
-            dealLogger.store(deal);
-        }
 
-        return deal;
+            System.out.println("Dealer Service : Checking Credit");
+            // Check credit of applicant
+            Application creditReply = creditService.checkCredit(offer);
+            offer.getApplication().setApproved(creditReply.isApproved());
+            deal.setAccepted(creditReply.isApproved());
+
+            if (!deal.isAccepted()) {
+                try {
+                    UserTransaction tx = (UserTransaction) new InitialContext().lookup("java:jboss/UserTransaction");
+                    tx.setRollbackOnly();
+                    System.out.println("Dealer Service : Low credit score - transaction has been rolled back");
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to rollback transaction", e);
+                }
+            } else {
+                dealLogger.store(deal);
+            }
+
+            return deal;
+        } catch (RuntimeException e) {
+            logger.error("Oops", e);
+            throw e;
+        }
     }
 
 }

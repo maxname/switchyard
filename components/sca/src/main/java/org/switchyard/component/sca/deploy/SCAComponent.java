@@ -13,12 +13,6 @@
  */
 package org.switchyard.component.sca.deploy;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-
-import javax.naming.InitialContext;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -33,6 +27,11 @@ import org.switchyard.component.sca.SCALogger;
 import org.switchyard.config.Configuration;
 import org.switchyard.deploy.Activator;
 import org.switchyard.deploy.BaseComponent;
+
+import javax.naming.InitialContext;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 
 /**
  * The "remote" component used in SwitchYard for providing and consuming clustered endpoints.
@@ -158,7 +157,7 @@ public class SCAComponent extends BaseComponent {
                 }
            }
         } catch (Exception ex) {
-            _log.debug("Failed to create cache for distributed registry", ex);
+            _log.warn("Failed to create cache for distributed registry", ex);
         } finally {
             Thread.currentThread().setContextClassLoader(origCl);
         }
