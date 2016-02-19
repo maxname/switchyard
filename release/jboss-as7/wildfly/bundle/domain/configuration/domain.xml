@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 
 <domain xmlns="urn:jboss:domain:2.2">
+
     <extensions>
         <extension module="org.jboss.as.clustering.infinispan"/>
         <extension module="org.jboss.as.clustering.jgroups"/>
@@ -31,10 +32,11 @@
         <extension module="org.wildfly.extension.undertow"/>
         <extension module="org.switchyard"/>
     </extensions>
+
     <system-properties>
-        <!-- IPv4 is not required, but setting this helps avoid unintended use of IPv6 -->
         <property name="java.net.preferIPv4Stack" value="true"/>
     </system-properties>
+
     <management>
         <access-control provider="simple">
             <role-mapping>
@@ -46,6 +48,7 @@
             </role-mapping>
         </access-control>
     </management>
+
     <profiles>
         <profile name="default">
             <subsystem xmlns="urn:jboss:domain:logging:2.0">
@@ -133,15 +136,15 @@
                     <context-services>
                         <context-service name="default" jndi-name="java:jboss/ee/concurrency/context/default" use-transaction-setup-provider="true"/>
                     </context-services>
+                    <managed-thread-factories>
+                        <managed-thread-factory name="default" jndi-name="java:jboss/ee/concurrency/factory/default" context-service="default"/>
+                    </managed-thread-factories>
                     <managed-executor-services>
                         <managed-executor-service name="default" jndi-name="java:jboss/ee/concurrency/executor/default" context-service="default" hung-task-threshold="60000" core-threads="5" max-threads="25" keepalive-time="5000"/>
                     </managed-executor-services>
                     <managed-scheduled-executor-services>
                         <managed-scheduled-executor-service name="default" jndi-name="java:jboss/ee/concurrency/scheduler/default" context-service="default" hung-task-threshold="60000" core-threads="2" keepalive-time="3000"/>
                     </managed-scheduled-executor-services>
-                    <managed-thread-factories>
-                        <managed-thread-factory name="default" jndi-name="java:jboss/ee/concurrency/factory/default" context-service="default"/>
-                    </managed-thread-factories>
                 </concurrent>
                 <default-bindings context-service="java:jboss/ee/concurrency/context/default" datasource="java:jboss/datasources/ExampleDS" jms-connection-factory="java:jboss/DefaultJMSConnectionFactory" managed-executor-service="java:jboss/ee/concurrency/executor/default" managed-scheduled-executor-service="java:jboss/ee/concurrency/scheduler/default" managed-thread-factory="java:jboss/ee/concurrency/factory/default"/>
             </subsystem>
@@ -152,14 +155,13 @@
                 </session-bean>
                 <pools>
                     <bean-instance-pools>
-                        <!-- A sample strict max pool configuration -->
                         <strict-max-pool name="slsb-strict-max-pool" max-pool-size="20" instance-acquisition-timeout="5" instance-acquisition-timeout-unit="MINUTES"/>
                         <strict-max-pool name="mdb-strict-max-pool" max-pool-size="20" instance-acquisition-timeout="5" instance-acquisition-timeout-unit="MINUTES"/>
                     </bean-instance-pools>
                 </pools>
                 <caches>
                     <cache name="simple"/>
-                    <cache name="distributable" aliases="passivating clustered" passivation-store-ref="infinispan"/>
+                    <cache name="distributable" passivation-store-ref="infinispan" aliases="passivating clustered"/>
                 </caches>
                 <passivation-stores>
                     <passivation-store name="infinispan" cache-container="ejb" max-size="10000"/>
@@ -193,7 +195,7 @@
                         <file-store passivation="false" purge="false"/>
                     </local-cache>
                 </cache-container>
-                <cache-container name="ejb" aliases="sfsb" default-cache="passivation" module="org.wildfly.clustering.ejb.infinispan">
+                <cache-container name="ejb" default-cache="passivation" module="org.wildfly.clustering.ejb.infinispan" aliases="sfsb">
                     <local-cache name="passivation" batching="true">
                         <file-store passivation="true" purge="false"/>
                     </local-cache>
@@ -242,7 +244,6 @@
             <subsystem xmlns="urn:jboss:domain:jmx:1.3">
                 <expose-resolved-model/>
                 <expose-expression-model/>
-                <!--<remoting-connector use-management-endpoint="false"/>-->
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:jpa:1.1">
                 <jpa default-datasource="" default-extended-persistence-inheritance="DEEP"/>
@@ -333,6 +334,56 @@
                 <client-config name="Standard-Client-Config"/>
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:weld:2.0"/>
+            <subsystem xmlns="urn:jboss:domain:switchyard:1.0">
+                <modules>
+                    <module identifier="org.switchyard.component.bean" implClass="org.switchyard.component.bean.deploy.BeanComponent"/>
+                    <module identifier="org.switchyard.component.soap" implClass="org.switchyard.component.soap.deploy.SOAPComponent"/>
+                    <module identifier="org.switchyard.component.camel" implClass="org.switchyard.component.camel.deploy.CamelComponent">
+                        <properties>
+                            <socketAddr>
+                                :18001
+                            </socketAddr>
+                        </properties>
+                    </module>
+                    <module identifier="org.switchyard.component.camel.atom" implClass="org.switchyard.component.camel.atom.deploy.CamelAtomComponent"/>
+                    <module identifier="org.switchyard.component.camel.core" implClass="org.switchyard.component.camel.core.deploy.CamelCoreComponent"/>
+                    <module identifier="org.switchyard.component.camel.cxf" implClass="org.switchyard.component.camel.cxf.deploy.CamelCxfComponent"/>
+                    <module identifier="org.switchyard.component.camel.file" implClass="org.switchyard.component.camel.file.deploy.CamelFileComponent"/>
+                    <module identifier="org.switchyard.component.camel.ftp" implClass="org.switchyard.component.camel.ftp.deploy.CamelFtpComponent"/>
+                    <module identifier="org.switchyard.component.camel.jms" implClass="org.switchyard.component.camel.jms.deploy.CamelJmsComponent"/>
+                    <module identifier="org.switchyard.component.camel.jpa" implClass="org.switchyard.component.camel.jpa.deploy.CamelJpaComponent"/>
+                    <module identifier="org.switchyard.component.camel.mail" implClass="org.switchyard.component.camel.mail.deploy.CamelMailComponent"/>
+                    <module identifier="org.switchyard.component.camel.mqtt" implClass="org.switchyard.component.camel.mqtt.deploy.CamelMqttComponent"/>
+                    <module identifier="org.switchyard.component.camel.netty" implClass="org.switchyard.component.camel.netty.deploy.CamelNettyComponent"/>
+                    <module identifier="org.switchyard.component.camel.quartz" implClass="org.switchyard.component.camel.quartz.deploy.CamelQuartzComponent"/>
+                    <module identifier="org.switchyard.component.camel.rss" implClass="org.switchyard.component.camel.rss.deploy.CamelRSSComponent"/>
+                    <module identifier="org.switchyard.component.camel.sap" implClass="org.switchyard.component.camel.sap.deploy.CamelSapComponent"/>
+                    <module identifier="org.switchyard.component.camel.sql" implClass="org.switchyard.component.camel.sql.deploy.CamelSqlComponent"/>
+                    <module identifier="org.switchyard.component.rules" implClass="org.switchyard.component.rules.deploy.RulesComponent"/>
+                    <module identifier="org.switchyard.component.bpm" implClass="org.switchyard.component.bpm.deploy.BPMComponent"/>
+                    <module identifier="org.switchyard.component.bpel" implClass="org.switchyard.component.bpel.deploy.BPELComponent"/>
+                    <module identifier="org.switchyard.component.http" implClass="org.switchyard.component.http.deploy.HttpComponent"/>
+                    <module identifier="org.switchyard.component.jca" implClass="org.switchyard.component.jca.deploy.JCAComponent"/>
+                    <module identifier="org.switchyard.component.sca" implClass="org.switchyard.component.sca.deploy.SCAComponent">
+                        <properties>
+                            <cache-name>
+                                cluster
+                            </cache-name>
+                        </properties>
+                    </module>
+                    <module identifier="org.switchyard.component.resteasy" implClass="org.switchyard.component.resteasy.deploy.RESTEasyComponent"/>
+                </modules>
+                <extensions>
+                    <extension identifier="org.apache.camel.bindy"/>
+                    <extension identifier="org.apache.camel.hl7"/>
+                    <extension identifier="org.apache.camel.mina2"/>
+                    <extension identifier="org.apache.camel.mvel"/>
+                    <extension identifier="org.apache.camel.ognl"/>
+                    <extension identifier="org.apache.camel.jaxb"/>
+                    <extension identifier="org.apache.camel.saxon"/>
+                    <extension identifier="org.apache.camel.soap"/>
+                </extensions>
+            </subsystem>
         </profile>
         <profile name="ha">
             <subsystem xmlns="urn:jboss:domain:logging:2.0">
@@ -420,15 +471,15 @@
                     <context-services>
                         <context-service name="default" jndi-name="java:jboss/ee/concurrency/context/default" use-transaction-setup-provider="true"/>
                     </context-services>
+                    <managed-thread-factories>
+                        <managed-thread-factory name="default" jndi-name="java:jboss/ee/concurrency/factory/default" context-service="default"/>
+                    </managed-thread-factories>
                     <managed-executor-services>
                         <managed-executor-service name="default" jndi-name="java:jboss/ee/concurrency/executor/default" context-service="default" hung-task-threshold="60000" core-threads="5" max-threads="25" keepalive-time="5000"/>
                     </managed-executor-services>
                     <managed-scheduled-executor-services>
                         <managed-scheduled-executor-service name="default" jndi-name="java:jboss/ee/concurrency/scheduler/default" context-service="default" hung-task-threshold="60000" core-threads="2" keepalive-time="3000"/>
                     </managed-scheduled-executor-services>
-                    <managed-thread-factories>
-                        <managed-thread-factory name="default" jndi-name="java:jboss/ee/concurrency/factory/default" context-service="default"/>
-                    </managed-thread-factories>
                 </concurrent>
                 <default-bindings context-service="java:jboss/ee/concurrency/context/default" datasource="java:jboss/datasources/ExampleDS" jms-connection-factory="java:jboss/DefaultJMSConnectionFactory" managed-executor-service="java:jboss/ee/concurrency/executor/default" managed-scheduled-executor-service="java:jboss/ee/concurrency/scheduler/default" managed-thread-factory="java:jboss/ee/concurrency/factory/default"/>
             </subsystem>
@@ -439,14 +490,13 @@
                 </session-bean>
                 <pools>
                     <bean-instance-pools>
-                        <!-- A sample strict max pool configuration -->
                         <strict-max-pool name="slsb-strict-max-pool" max-pool-size="20" instance-acquisition-timeout="5" instance-acquisition-timeout-unit="MINUTES"/>
                         <strict-max-pool name="mdb-strict-max-pool" max-pool-size="20" instance-acquisition-timeout="5" instance-acquisition-timeout-unit="MINUTES"/>
                     </bean-instance-pools>
                 </pools>
                 <caches>
                     <cache name="simple"/>
-                    <cache name="distributable" aliases="passivating clustered" passivation-store-ref="infinispan"/>
+                    <cache name="distributable" passivation-store-ref="infinispan" aliases="passivating clustered"/>
                 </caches>
                 <passivation-stores>
                     <passivation-store name="infinispan" cache-container="ejb" max-size="10000"/>
@@ -472,21 +522,21 @@
                 <buffer-pool name="default"/>
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:infinispan:2.0">
-                <cache-container name="server" aliases="singleton cluster" default-cache="default" module="org.wildfly.clustering.server">
+                <cache-container name="server" default-cache="default" module="org.wildfly.clustering.server" aliases="singleton cluster">
                     <transport lock-timeout="60000"/>
-                    <replicated-cache name="default" mode="SYNC" batching="true">
+                    <replicated-cache name="default" batching="true" mode="SYNC">
                         <locking isolation="REPEATABLE_READ"/>
                     </replicated-cache>
                 </cache-container>
                 <cache-container name="web" default-cache="dist" module="org.wildfly.clustering.web.infinispan">
                     <transport lock-timeout="60000"/>
-                    <distributed-cache name="dist" mode="ASYNC" batching="true" l1-lifespan="0" owners="2">
+                    <distributed-cache name="dist" batching="true" mode="ASYNC" owners="2" l1-lifespan="0">
                         <file-store/>
                     </distributed-cache>
                 </cache-container>
-                <cache-container name="ejb" aliases="sfsb" default-cache="dist" module="org.wildfly.clustering.ejb.infinispan">
+                <cache-container name="ejb" default-cache="dist" module="org.wildfly.clustering.ejb.infinispan" aliases="sfsb">
                     <transport lock-timeout="60000"/>
-                    <distributed-cache name="dist" mode="ASYNC" batching="true" l1-lifespan="0" owners="2">
+                    <distributed-cache name="dist" batching="true" mode="ASYNC" owners="2" l1-lifespan="0">
                         <file-store/>
                     </distributed-cache>
                 </cache-container>
@@ -505,6 +555,12 @@
                     <replicated-cache name="timestamps" mode="ASYNC">
                         <transaction mode="NONE"/>
                         <eviction strategy="NONE"/>
+                    </replicated-cache>
+                </cache-container>
+                <cache-container name="switchyard" default-cache="default" start="EAGER">
+                    <transport lock-timeout="60000"/>
+                    <replicated-cache name="default" start="EAGER" batching="true" mode="SYNC">
+                        <locking isolation="REPEATABLE_READ"/>
                     </replicated-cache>
                 </cache-container>
             </subsystem>
@@ -565,7 +621,6 @@
             <subsystem xmlns="urn:jboss:domain:jmx:1.3">
                 <expose-resolved-model/>
                 <expose-expression-model/>
-                <!--<remoting-connector use-management-endpoint="false"/>-->
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:jpa:1.1">
                 <jpa default-datasource="" default-extended-persistence-inheritance="DEEP"/>
@@ -633,8 +688,8 @@
             <subsystem xmlns="urn:jboss:domain:undertow:1.2">
                 <buffer-cache name="default"/>
                 <server name="default-server">
-                    <http-listener name="default" socket-binding="http"/>
                     <ajp-listener name="ajp" socket-binding="ajp"/>
+                    <http-listener name="default" socket-binding="http"/>
                     <host name="default-host" alias="localhost">
                         <location name="/" handler="welcome-content"/>
                         <filter-ref name="server-header"/>
@@ -664,6 +719,56 @@
                 <client-config name="Standard-Client-Config"/>
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:weld:2.0"/>
+            <subsystem xmlns="urn:jboss:domain:switchyard:1.0">
+                <modules>
+                    <module identifier="org.switchyard.component.bean" implClass="org.switchyard.component.bean.deploy.BeanComponent"/>
+                    <module identifier="org.switchyard.component.soap" implClass="org.switchyard.component.soap.deploy.SOAPComponent"/>
+                    <module identifier="org.switchyard.component.camel" implClass="org.switchyard.component.camel.deploy.CamelComponent">
+                        <properties>
+                            <socketAddr>
+                                :18001
+                            </socketAddr>
+                        </properties>
+                    </module>
+                    <module identifier="org.switchyard.component.camel.atom" implClass="org.switchyard.component.camel.atom.deploy.CamelAtomComponent"/>
+                    <module identifier="org.switchyard.component.camel.core" implClass="org.switchyard.component.camel.core.deploy.CamelCoreComponent"/>
+                    <module identifier="org.switchyard.component.camel.cxf" implClass="org.switchyard.component.camel.cxf.deploy.CamelCxfComponent"/>
+                    <module identifier="org.switchyard.component.camel.file" implClass="org.switchyard.component.camel.file.deploy.CamelFileComponent"/>
+                    <module identifier="org.switchyard.component.camel.ftp" implClass="org.switchyard.component.camel.ftp.deploy.CamelFtpComponent"/>
+                    <module identifier="org.switchyard.component.camel.jms" implClass="org.switchyard.component.camel.jms.deploy.CamelJmsComponent"/>
+                    <module identifier="org.switchyard.component.camel.jpa" implClass="org.switchyard.component.camel.jpa.deploy.CamelJpaComponent"/>
+                    <module identifier="org.switchyard.component.camel.mail" implClass="org.switchyard.component.camel.mail.deploy.CamelMailComponent"/>
+                    <module identifier="org.switchyard.component.camel.mqtt" implClass="org.switchyard.component.camel.mqtt.deploy.CamelMqttComponent"/>
+                    <module identifier="org.switchyard.component.camel.netty" implClass="org.switchyard.component.camel.netty.deploy.CamelNettyComponent"/>
+                    <module identifier="org.switchyard.component.camel.quartz" implClass="org.switchyard.component.camel.quartz.deploy.CamelQuartzComponent"/>
+                    <module identifier="org.switchyard.component.camel.rss" implClass="org.switchyard.component.camel.rss.deploy.CamelRSSComponent"/>
+                    <module identifier="org.switchyard.component.camel.sap" implClass="org.switchyard.component.camel.sap.deploy.CamelSapComponent"/>
+                    <module identifier="org.switchyard.component.camel.sql" implClass="org.switchyard.component.camel.sql.deploy.CamelSqlComponent"/>
+                    <module identifier="org.switchyard.component.rules" implClass="org.switchyard.component.rules.deploy.RulesComponent"/>
+                    <module identifier="org.switchyard.component.bpm" implClass="org.switchyard.component.bpm.deploy.BPMComponent"/>
+                    <module identifier="org.switchyard.component.bpel" implClass="org.switchyard.component.bpel.deploy.BPELComponent"/>
+                    <module identifier="org.switchyard.component.http" implClass="org.switchyard.component.http.deploy.HttpComponent"/>
+                    <module identifier="org.switchyard.component.jca" implClass="org.switchyard.component.jca.deploy.JCAComponent"/>
+                    <module identifier="org.switchyard.component.sca" implClass="org.switchyard.component.sca.deploy.SCAComponent">
+                        <properties>
+                            <cache-name>
+                                switchyard
+                            </cache-name>
+                        </properties>
+                    </module>
+                    <module identifier="org.switchyard.component.resteasy" implClass="org.switchyard.component.resteasy.deploy.RESTEasyComponent"/>
+                </modules>
+                <extensions>
+                    <extension identifier="org.apache.camel.bindy"/>
+                    <extension identifier="org.apache.camel.hl7"/>
+                    <extension identifier="org.apache.camel.mina2"/>
+                    <extension identifier="org.apache.camel.mvel"/>
+                    <extension identifier="org.apache.camel.ognl"/>
+                    <extension identifier="org.apache.camel.jaxb"/>
+                    <extension identifier="org.apache.camel.saxon"/>
+                    <extension identifier="org.apache.camel.soap"/>
+                </extensions>
+            </subsystem>
         </profile>
         <profile name="full">
             <subsystem xmlns="urn:jboss:domain:logging:2.0">
@@ -751,15 +856,15 @@
                     <context-services>
                         <context-service name="default" jndi-name="java:jboss/ee/concurrency/context/default" use-transaction-setup-provider="true"/>
                     </context-services>
+                    <managed-thread-factories>
+                        <managed-thread-factory name="default" jndi-name="java:jboss/ee/concurrency/factory/default" context-service="default"/>
+                    </managed-thread-factories>
                     <managed-executor-services>
                         <managed-executor-service name="default" jndi-name="java:jboss/ee/concurrency/executor/default" context-service="default" hung-task-threshold="60000" core-threads="5" max-threads="25" keepalive-time="5000"/>
                     </managed-executor-services>
                     <managed-scheduled-executor-services>
                         <managed-scheduled-executor-service name="default" jndi-name="java:jboss/ee/concurrency/scheduler/default" context-service="default" hung-task-threshold="60000" core-threads="2" keepalive-time="3000"/>
                     </managed-scheduled-executor-services>
-                    <managed-thread-factories>
-                        <managed-thread-factory name="default" jndi-name="java:jboss/ee/concurrency/factory/default" context-service="default"/>
-                    </managed-thread-factories>
                 </concurrent>
                 <default-bindings context-service="java:jboss/ee/concurrency/context/default" datasource="java:jboss/datasources/ExampleDS" jms-connection-factory="java:jboss/DefaultJMSConnectionFactory" managed-executor-service="java:jboss/ee/concurrency/executor/default" managed-scheduled-executor-service="java:jboss/ee/concurrency/scheduler/default" managed-thread-factory="java:jboss/ee/concurrency/factory/default"/>
             </subsystem>
@@ -774,14 +879,13 @@
                 </mdb>
                 <pools>
                     <bean-instance-pools>
-                        <!-- A sample strict max pool configuration -->
                         <strict-max-pool name="slsb-strict-max-pool" max-pool-size="20" instance-acquisition-timeout="5" instance-acquisition-timeout-unit="MINUTES"/>
                         <strict-max-pool name="mdb-strict-max-pool" max-pool-size="20" instance-acquisition-timeout="5" instance-acquisition-timeout-unit="MINUTES"/>
                     </bean-instance-pools>
                 </pools>
                 <caches>
                     <cache name="simple"/>
-                    <cache name="distributable" aliases="passivating clustered" passivation-store-ref="infinispan"/>
+                    <cache name="distributable" passivation-store-ref="infinispan" aliases="passivating clustered"/>
                 </caches>
                 <passivation-stores>
                     <passivation-store name="infinispan" cache-container="ejb" max-size="10000"/>
@@ -816,7 +920,7 @@
                         <file-store passivation="false" purge="false"/>
                     </local-cache>
                 </cache-container>
-                <cache-container name="ejb" aliases="sfsb" default-cache="passivation" module="org.wildfly.clustering.ejb.infinispan">
+                <cache-container name="ejb" default-cache="passivation" module="org.wildfly.clustering.ejb.infinispan" aliases="sfsb">
                     <local-cache name="passivation" batching="true">
                         <file-store passivation="true" purge="false"/>
                     </local-cache>
@@ -843,7 +947,7 @@
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:jacorb:1.3">
                 <orb socket-binding="jacorb" ssl-socket-binding="jacorb-ssl">
-                    <initializers transactions="spec" security="identity"/>
+                    <initializers security="identity" transactions="spec"/>
                 </orb>
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:jaxrs:1.0"/>
@@ -870,7 +974,6 @@
             <subsystem xmlns="urn:jboss:domain:jmx:1.3">
                 <expose-resolved-model/>
                 <expose-expression-model/>
-                <!--<remoting-connector use-management-endpoint="false"/>-->
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:jpa:1.1">
                 <jpa default-datasource="" default-extended-persistence-inheritance="DEEP"/>
@@ -885,6 +988,7 @@
             <subsystem xmlns="urn:jboss:domain:messaging:2.0">
                 <hornetq-server>
                     <journal-file-size>102400</journal-file-size>
+
                     <connectors>
                         <http-connector name="http-connector" socket-binding="http">
                             <param key="http-upgrade-endpoint" value="http-acceptor"/>
@@ -895,14 +999,16 @@
                         </http-connector>
                         <in-vm-connector name="in-vm" server-id="0"/>
                     </connectors>
+
                     <acceptors>
-                        <http-acceptor name="http-acceptor" http-listener="default"/>
-                        <http-acceptor name="http-acceptor-throughput" http-listener="default">
+                        <http-acceptor http-listener="default" name="http-acceptor"/>
+                        <http-acceptor http-listener="default" name="http-acceptor-throughput">
                             <param key="batch-delay" value="50"/>
                             <param key="direct-deliver" value="false"/>
                         </http-acceptor>
                         <in-vm-acceptor name="in-vm" server-id="0"/>
                     </acceptors>
+
                     <security-settings>
                         <security-setting match="#">
                             <permission type="send" roles="guest"/>
@@ -911,8 +1017,8 @@
                             <permission type="deleteNonDurableQueue" roles="guest"/>
                         </security-setting>
                     </security-settings>
+
                     <address-settings>
-                        <!--default for catch all-->
                         <address-setting match="#">
                             <dead-letter-address>jms.queue.DLQ</dead-letter-address>
                             <expiry-address>jms.queue.ExpiryQueue</expiry-address>
@@ -921,6 +1027,7 @@
                             <message-counter-history-day-limit>10</message-counter-history-day-limit>
                         </address-setting>
                     </address-settings>
+
                     <jms-connection-factories>
                         <connection-factory name="InVmConnectionFactory">
                             <connectors>
@@ -945,11 +1052,11 @@
                             </connectors>
                             <entries>
                                 <entry name="java:/JmsXA"/>
-                                <!-- Global JNDI entry used to provide a default JMS Connection factory to EE application -->
                                 <entry name="java:jboss/DefaultJMSConnectionFactory"/>
                             </entries>
                         </pooled-connection-factory>
                     </jms-connection-factories>
+
                     <jms-destinations>
                         <jms-queue name="ExpiryQueue">
                             <entry name="java:/jms/queue/ExpiryQueue"/>
@@ -1040,6 +1147,56 @@
                 <client-config name="Standard-Client-Config"/>
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:weld:2.0"/>
+            <subsystem xmlns="urn:jboss:domain:switchyard:1.0">
+                <modules>
+                    <module identifier="org.switchyard.component.bean" implClass="org.switchyard.component.bean.deploy.BeanComponent"/>
+                    <module identifier="org.switchyard.component.soap" implClass="org.switchyard.component.soap.deploy.SOAPComponent"/>
+                    <module identifier="org.switchyard.component.camel" implClass="org.switchyard.component.camel.deploy.CamelComponent">
+                        <properties>
+                            <socketAddr>
+                                :18001
+                            </socketAddr>
+                        </properties>
+                    </module>
+                    <module identifier="org.switchyard.component.camel.atom" implClass="org.switchyard.component.camel.atom.deploy.CamelAtomComponent"/>
+                    <module identifier="org.switchyard.component.camel.core" implClass="org.switchyard.component.camel.core.deploy.CamelCoreComponent"/>
+                    <module identifier="org.switchyard.component.camel.cxf" implClass="org.switchyard.component.camel.cxf.deploy.CamelCxfComponent"/>
+                    <module identifier="org.switchyard.component.camel.file" implClass="org.switchyard.component.camel.file.deploy.CamelFileComponent"/>
+                    <module identifier="org.switchyard.component.camel.ftp" implClass="org.switchyard.component.camel.ftp.deploy.CamelFtpComponent"/>
+                    <module identifier="org.switchyard.component.camel.jms" implClass="org.switchyard.component.camel.jms.deploy.CamelJmsComponent"/>
+                    <module identifier="org.switchyard.component.camel.jpa" implClass="org.switchyard.component.camel.jpa.deploy.CamelJpaComponent"/>
+                    <module identifier="org.switchyard.component.camel.mail" implClass="org.switchyard.component.camel.mail.deploy.CamelMailComponent"/>
+                    <module identifier="org.switchyard.component.camel.mqtt" implClass="org.switchyard.component.camel.mqtt.deploy.CamelMqttComponent"/>
+                    <module identifier="org.switchyard.component.camel.netty" implClass="org.switchyard.component.camel.netty.deploy.CamelNettyComponent"/>
+                    <module identifier="org.switchyard.component.camel.quartz" implClass="org.switchyard.component.camel.quartz.deploy.CamelQuartzComponent"/>
+                    <module identifier="org.switchyard.component.camel.rss" implClass="org.switchyard.component.camel.rss.deploy.CamelRSSComponent"/>
+                    <module identifier="org.switchyard.component.camel.sap" implClass="org.switchyard.component.camel.sap.deploy.CamelSapComponent"/>
+                    <module identifier="org.switchyard.component.camel.sql" implClass="org.switchyard.component.camel.sql.deploy.CamelSqlComponent"/>
+                    <module identifier="org.switchyard.component.rules" implClass="org.switchyard.component.rules.deploy.RulesComponent"/>
+                    <module identifier="org.switchyard.component.bpm" implClass="org.switchyard.component.bpm.deploy.BPMComponent"/>
+                    <module identifier="org.switchyard.component.bpel" implClass="org.switchyard.component.bpel.deploy.BPELComponent"/>
+                    <module identifier="org.switchyard.component.http" implClass="org.switchyard.component.http.deploy.HttpComponent"/>
+                    <module identifier="org.switchyard.component.jca" implClass="org.switchyard.component.jca.deploy.JCAComponent"/>
+                    <module identifier="org.switchyard.component.sca" implClass="org.switchyard.component.sca.deploy.SCAComponent">
+                        <properties>
+                            <cache-name>
+                                cluster
+                            </cache-name>
+                        </properties>
+                    </module>
+                    <module identifier="org.switchyard.component.resteasy" implClass="org.switchyard.component.resteasy.deploy.RESTEasyComponent"/>
+                </modules>
+                <extensions>
+                    <extension identifier="org.apache.camel.bindy"/>
+                    <extension identifier="org.apache.camel.hl7"/>
+                    <extension identifier="org.apache.camel.mina2"/>
+                    <extension identifier="org.apache.camel.mvel"/>
+                    <extension identifier="org.apache.camel.ognl"/>
+                    <extension identifier="org.apache.camel.jaxb"/>
+                    <extension identifier="org.apache.camel.saxon"/>
+                    <extension identifier="org.apache.camel.soap"/>
+                </extensions>
+            </subsystem>
         </profile>
         <profile name="full-ha">
             <subsystem xmlns="urn:jboss:domain:logging:2.0">
@@ -1127,15 +1284,15 @@
                     <context-services>
                         <context-service name="default" jndi-name="java:jboss/ee/concurrency/context/default" use-transaction-setup-provider="true"/>
                     </context-services>
+                    <managed-thread-factories>
+                        <managed-thread-factory name="default" jndi-name="java:jboss/ee/concurrency/factory/default" context-service="default"/>
+                    </managed-thread-factories>
                     <managed-executor-services>
                         <managed-executor-service name="default" jndi-name="java:jboss/ee/concurrency/executor/default" context-service="default" hung-task-threshold="60000" core-threads="5" max-threads="25" keepalive-time="5000"/>
                     </managed-executor-services>
                     <managed-scheduled-executor-services>
                         <managed-scheduled-executor-service name="default" jndi-name="java:jboss/ee/concurrency/scheduler/default" context-service="default" hung-task-threshold="60000" core-threads="2" keepalive-time="3000"/>
                     </managed-scheduled-executor-services>
-                    <managed-thread-factories>
-                        <managed-thread-factory name="default" jndi-name="java:jboss/ee/concurrency/factory/default" context-service="default"/>
-                    </managed-thread-factories>
                 </concurrent>
                 <default-bindings context-service="java:jboss/ee/concurrency/context/default" datasource="java:jboss/datasources/ExampleDS" jms-connection-factory="java:jboss/DefaultJMSConnectionFactory" managed-executor-service="java:jboss/ee/concurrency/executor/default" managed-scheduled-executor-service="java:jboss/ee/concurrency/scheduler/default" managed-thread-factory="java:jboss/ee/concurrency/factory/default"/>
             </subsystem>
@@ -1150,14 +1307,13 @@
                 </mdb>
                 <pools>
                     <bean-instance-pools>
-                        <!-- A sample strict max pool configuration -->
                         <strict-max-pool name="slsb-strict-max-pool" max-pool-size="20" instance-acquisition-timeout="5" instance-acquisition-timeout-unit="MINUTES"/>
                         <strict-max-pool name="mdb-strict-max-pool" max-pool-size="20" instance-acquisition-timeout="5" instance-acquisition-timeout-unit="MINUTES"/>
                     </bean-instance-pools>
                 </pools>
                 <caches>
                     <cache name="simple"/>
-                    <cache name="distributable" aliases="passivating clustered" passivation-store-ref="infinispan"/>
+                    <cache name="distributable" passivation-store-ref="infinispan" aliases="passivating clustered"/>
                 </caches>
                 <passivation-stores>
                     <passivation-store name="infinispan" cache-container="ejb" max-size="10000"/>
@@ -1184,21 +1340,21 @@
                 <buffer-pool name="default"/>
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:infinispan:2.0">
-                <cache-container name="server" aliases="singleton cluster" default-cache="default" module="org.wildfly.clustering.server">
+                <cache-container name="server" default-cache="default" module="org.wildfly.clustering.server" aliases="singleton cluster">
                     <transport lock-timeout="60000"/>
-                    <replicated-cache name="default" mode="SYNC" batching="true">
+                    <replicated-cache name="default" batching="true" mode="SYNC">
                         <locking isolation="REPEATABLE_READ"/>
                     </replicated-cache>
                 </cache-container>
                 <cache-container name="web" default-cache="dist" module="org.wildfly.clustering.web.infinispan">
                     <transport lock-timeout="60000"/>
-                    <distributed-cache name="dist" mode="ASYNC" batching="true" l1-lifespan="0" owners="2">
+                    <distributed-cache name="dist" batching="true" mode="ASYNC" owners="2" l1-lifespan="0">
                         <file-store/>
                     </distributed-cache>
                 </cache-container>
-                <cache-container name="ejb" aliases="sfsb" default-cache="dist" module="org.wildfly.clustering.ejb.infinispan">
+                <cache-container name="ejb" default-cache="dist" module="org.wildfly.clustering.ejb.infinispan" aliases="sfsb">
                     <transport lock-timeout="60000"/>
-                    <distributed-cache name="dist" mode="ASYNC" batching="true" l1-lifespan="0" owners="2">
+                    <distributed-cache name="dist" batching="true" mode="ASYNC" owners="2" l1-lifespan="0">
                         <file-store/>
                     </distributed-cache>
                 </cache-container>
@@ -1219,10 +1375,16 @@
                         <eviction strategy="NONE"/>
                     </replicated-cache>
                 </cache-container>
+                <cache-container name="switchyard" default-cache="default" start="EAGER">
+                    <transport lock-timeout="60000"/>
+                    <replicated-cache name="default" start="EAGER" batching="true" mode="SYNC">
+                        <locking isolation="REPEATABLE_READ"/>
+                    </replicated-cache>
+                </cache-container>
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:jacorb:1.3">
                 <orb socket-binding="jacorb" ssl-socket-binding="jacorb-ssl">
-                    <initializers transactions="spec" security="identity"/>
+                    <initializers security="identity" transactions="spec"/>
                 </orb>
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:jaxrs:1.0"/>
@@ -1282,7 +1444,6 @@
             <subsystem xmlns="urn:jboss:domain:jmx:1.3">
                 <expose-resolved-model/>
                 <expose-expression-model/>
-                <!--<remoting-connector use-management-endpoint="false"/>-->
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:jpa:1.1">
                 <jpa default-datasource="" default-extended-persistence-inheritance="DEEP"/>
@@ -1298,6 +1459,7 @@
                 <hornetq-server>
                     <cluster-password>${jboss.messaging.cluster.password:CHANGE ME!!}</cluster-password>
                     <journal-file-size>102400</journal-file-size>
+
                     <connectors>
                         <http-connector name="http-connector" socket-binding="http">
                             <param key="http-upgrade-endpoint" value="http-acceptor"/>
@@ -1308,25 +1470,31 @@
                         </http-connector>
                         <in-vm-connector name="in-vm" server-id="0"/>
                     </connectors>
+
                     <acceptors>
-                        <http-acceptor name="http-acceptor" http-listener="default"/>
-                        <http-acceptor name="http-acceptor-throughput" http-listener="default">
+                        <http-acceptor http-listener="default" name="http-acceptor"/>
+                        <http-acceptor http-listener="default" name="http-acceptor-throughput">
                             <param key="batch-delay" value="50"/>
                             <param key="direct-deliver" value="false"/>
                         </http-acceptor>
                         <in-vm-acceptor name="in-vm" server-id="0"/>
                     </acceptors>
+
                     <broadcast-groups>
                         <broadcast-group name="bg-group1">
                             <socket-binding>messaging-group</socket-binding>
-                            <connector-ref>http-connector</connector-ref>
+                            <connector-ref>
+                                http-connector
+                            </connector-ref>
                         </broadcast-group>
                     </broadcast-groups>
+
                     <discovery-groups>
                         <discovery-group name="dg-group1">
                             <socket-binding>messaging-group</socket-binding>
                         </discovery-group>
                     </discovery-groups>
+
                     <cluster-connections>
                         <cluster-connection name="my-cluster">
                             <address>jms</address>
@@ -1334,6 +1502,7 @@
                             <discovery-group-ref discovery-group-name="dg-group1"/>
                         </cluster-connection>
                     </cluster-connections>
+
                     <security-settings>
                         <security-setting match="#">
                             <permission type="send" roles="guest"/>
@@ -1342,17 +1511,18 @@
                             <permission type="deleteNonDurableQueue" roles="guest"/>
                         </security-setting>
                     </security-settings>
+
                     <address-settings>
-                        <!--default for catch all-->
                         <address-setting match="#">
                             <dead-letter-address>jms.queue.DLQ</dead-letter-address>
                             <expiry-address>jms.queue.ExpiryQueue</expiry-address>
-                            <redistribution-delay>1000</redistribution-delay>
                             <max-size-bytes>10485760</max-size-bytes>
                             <page-size-bytes>2097152</page-size-bytes>
                             <message-counter-history-day-limit>10</message-counter-history-day-limit>
+                            <redistribution-delay>1000</redistribution-delay>
                         </address-setting>
                     </address-settings>
+
                     <jms-connection-factories>
                         <connection-factory name="InVmConnectionFactory">
                             <connectors>
@@ -1380,11 +1550,11 @@
                             </connectors>
                             <entries>
                                 <entry name="java:/JmsXA"/>
-                                <!-- Global JNDI entry used to provide a default JMS Connection factory to EE application -->
                                 <entry name="java:jboss/DefaultJMSConnectionFactory"/>
                             </entries>
                         </pooled-connection-factory>
                     </jms-connection-factories>
+
                     <jms-destinations>
                         <jms-queue name="ExpiryQueue">
                             <entry name="java:/jms/queue/ExpiryQueue"/>
@@ -1452,8 +1622,8 @@
             <subsystem xmlns="urn:jboss:domain:undertow:1.2">
                 <buffer-cache name="default"/>
                 <server name="default-server">
-                    <http-listener name="default" socket-binding="http"/>
                     <ajp-listener name="ajp" socket-binding="ajp"/>
+                    <http-listener name="default" socket-binding="http"/>
                     <host name="default-host" alias="localhost">
                         <location name="/" handler="welcome-content"/>
                         <filter-ref name="server-header"/>
@@ -1483,25 +1653,67 @@
                 <client-config name="Standard-Client-Config"/>
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:weld:2.0"/>
+            <subsystem xmlns="urn:jboss:domain:switchyard:1.0">
+                <modules>
+                    <module identifier="org.switchyard.component.bean" implClass="org.switchyard.component.bean.deploy.BeanComponent"/>
+                    <module identifier="org.switchyard.component.soap" implClass="org.switchyard.component.soap.deploy.SOAPComponent"/>
+                    <module identifier="org.switchyard.component.camel" implClass="org.switchyard.component.camel.deploy.CamelComponent">
+                        <properties>
+                            <socketAddr>
+                                :18001
+                            </socketAddr>
+                        </properties>
+                    </module>
+                    <module identifier="org.switchyard.component.camel.atom" implClass="org.switchyard.component.camel.atom.deploy.CamelAtomComponent"/>
+                    <module identifier="org.switchyard.component.camel.core" implClass="org.switchyard.component.camel.core.deploy.CamelCoreComponent"/>
+                    <module identifier="org.switchyard.component.camel.cxf" implClass="org.switchyard.component.camel.cxf.deploy.CamelCxfComponent"/>
+                    <module identifier="org.switchyard.component.camel.file" implClass="org.switchyard.component.camel.file.deploy.CamelFileComponent"/>
+                    <module identifier="org.switchyard.component.camel.ftp" implClass="org.switchyard.component.camel.ftp.deploy.CamelFtpComponent"/>
+                    <module identifier="org.switchyard.component.camel.jms" implClass="org.switchyard.component.camel.jms.deploy.CamelJmsComponent"/>
+                    <module identifier="org.switchyard.component.camel.jpa" implClass="org.switchyard.component.camel.jpa.deploy.CamelJpaComponent"/>
+                    <module identifier="org.switchyard.component.camel.mail" implClass="org.switchyard.component.camel.mail.deploy.CamelMailComponent"/>
+                    <module identifier="org.switchyard.component.camel.mqtt" implClass="org.switchyard.component.camel.mqtt.deploy.CamelMqttComponent"/>
+                    <module identifier="org.switchyard.component.camel.netty" implClass="org.switchyard.component.camel.netty.deploy.CamelNettyComponent"/>
+                    <module identifier="org.switchyard.component.camel.quartz" implClass="org.switchyard.component.camel.quartz.deploy.CamelQuartzComponent"/>
+                    <module identifier="org.switchyard.component.camel.rss" implClass="org.switchyard.component.camel.rss.deploy.CamelRSSComponent"/>
+                    <module identifier="org.switchyard.component.camel.sap" implClass="org.switchyard.component.camel.sap.deploy.CamelSapComponent"/>
+                    <module identifier="org.switchyard.component.camel.sql" implClass="org.switchyard.component.camel.sql.deploy.CamelSqlComponent"/>
+                    <module identifier="org.switchyard.component.rules" implClass="org.switchyard.component.rules.deploy.RulesComponent"/>
+                    <module identifier="org.switchyard.component.bpm" implClass="org.switchyard.component.bpm.deploy.BPMComponent"/>
+                    <module identifier="org.switchyard.component.bpel" implClass="org.switchyard.component.bpel.deploy.BPELComponent"/>
+                    <module identifier="org.switchyard.component.http" implClass="org.switchyard.component.http.deploy.HttpComponent"/>
+                    <module identifier="org.switchyard.component.jca" implClass="org.switchyard.component.jca.deploy.JCAComponent"/>
+                    <module identifier="org.switchyard.component.sca" implClass="org.switchyard.component.sca.deploy.SCAComponent">
+                        <properties>
+                            <cache-name>
+                                switchyard
+                            </cache-name>
+                        </properties>
+                    </module>
+                    <module identifier="org.switchyard.component.resteasy" implClass="org.switchyard.component.resteasy.deploy.RESTEasyComponent"/>
+                </modules>
+                <extensions>
+                    <extension identifier="org.apache.camel.bindy"/>
+                    <extension identifier="org.apache.camel.hl7"/>
+                    <extension identifier="org.apache.camel.mina2"/>
+                    <extension identifier="org.apache.camel.mvel"/>
+                    <extension identifier="org.apache.camel.ognl"/>
+                    <extension identifier="org.apache.camel.jaxb"/>
+                    <extension identifier="org.apache.camel.saxon"/>
+                    <extension identifier="org.apache.camel.soap"/>
+                </extensions>
+            </subsystem>
         </profile>
     </profiles>
-    <!--
-      ~ 
-      ~          Named interfaces that can be referenced elsewhere in the configuration. The configuration
-      ~          for how to associate these logical names with an actual network interface can either
-      ~          be specified here or can be declared on a per-host basis in the equivalent element in host.xml.
-      ~ 
-      ~          These default configurations require the binding specification to be done in host.xml.
-      ~     
-      -->
+
     <interfaces>
         <interface name="management"/>
         <interface name="public"/>
         <interface name="unsecure"/>
     </interfaces>
+
     <socket-binding-groups>
         <socket-binding-group name="standard-sockets" default-interface="public">
-            <!-- Needed for server groups using the 'default' profile  -->
             <socket-binding name="ajp" port="${jboss.ajp.port:8009}"/>
             <socket-binding name="http" port="${jboss.http.port:8080}"/>
             <socket-binding name="https" port="${jboss.https.port:8443}"/>
@@ -1512,7 +1724,6 @@
             </outbound-socket-binding>
         </socket-binding-group>
         <socket-binding-group name="ha-sockets" default-interface="public">
-            <!-- Needed for server groups using the 'ha' profile  -->
             <socket-binding name="ajp" port="${jboss.ajp.port:8009}"/>
             <socket-binding name="http" port="${jboss.http.port:8080}"/>
             <socket-binding name="https" port="${jboss.https.port:8443}"/>
@@ -1529,7 +1740,6 @@
             </outbound-socket-binding>
         </socket-binding-group>
         <socket-binding-group name="full-sockets" default-interface="public">
-            <!-- Needed for server groups using the 'full' profile  -->
             <socket-binding name="ajp" port="${jboss.ajp.port:8009}"/>
             <socket-binding name="http" port="${jboss.http.port:8080}"/>
             <socket-binding name="https" port="${jboss.https.port:8443}"/>
@@ -1543,7 +1753,6 @@
             </outbound-socket-binding>
         </socket-binding-group>
         <socket-binding-group name="full-ha-sockets" default-interface="public">
-            <!-- Needed for server groups using the 'full-ha' profile  -->
             <socket-binding name="ajp" port="${jboss.ajp.port:8009}"/>
             <socket-binding name="http" port="${jboss.http.port:8080}"/>
             <socket-binding name="https" port="${jboss.https.port:8443}"/>
@@ -1563,6 +1772,8 @@
             </outbound-socket-binding>
         </socket-binding-group>
     </socket-binding-groups>
+
+
     <server-groups>
         <server-group name="main-server-group" profile="full">
             <jvm name="default">
@@ -1577,4 +1788,5 @@
             <socket-binding-group ref="full-ha-sockets"/>
         </server-group>
     </server-groups>
+
 </domain>
