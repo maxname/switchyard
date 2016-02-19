@@ -33,6 +33,19 @@
             <directory>xsl</directory>
             <outputDirectory>${distro.root.dir}/xsl</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>domain</directory>
+            <outputDirectory>${distro.root.dir}/domain</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>standalone</directory>
+            <outputDirectory>${distro.root.dir}/standalone</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <!-- fixes: SwitchYard Console & https://issues.jboss.org/browse/WFCORE-519 -->
+            <directory>modules/system/layers/base/sun/jdk</directory>
+            <outputDirectory>${distro.root.dir}/modules/system/layers/base/sun/jdk/main</outputDirectory>
+        </fileSet>
     </fileSets>
 
 </assembly>

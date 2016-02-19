@@ -1652,7 +1652,8 @@
         <module>bom</module>
         <module>core</module>
         <module>components</module>
-        <module>console</module>
+        <!-- Enforse console to be downloaded from mvn -->
+        <!--<module>console</module>-->
         <module>quickstarts</module>
         <module>release</module>
     </modules>
