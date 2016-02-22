@@ -15,3 +15,6 @@ jca-outbound-activemq
 
 [Recheck]
 camel-cxf-binding
+
+[Note]
+Unknown deployment type: switchyard = https://issues.jboss.org/browse/HAL-546
