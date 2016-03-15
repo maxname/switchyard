@@ -13,18 +13,11 @@
  */
 package org.switchyard.admin.base;
 
-import java.util.EventObject;
-
-import javax.xml.namespace.QName;
-
 import org.switchyard.Exchange;
-import org.switchyard.admin.Application;
-import org.switchyard.admin.ComponentReference;
-import org.switchyard.admin.Reference;
-import org.switchyard.admin.Service;
-import org.switchyard.admin.SwitchYard;
+import org.switchyard.admin.*;
 import org.switchyard.admin.mbean.internal.LocalManagement;
 import org.switchyard.admin.mbean.internal.MBeans;
+import org.switchyard.config.model.composite.ComponentModel;
 import org.switchyard.deploy.ComponentNames;
 import org.switchyard.deploy.ServiceDomainManager;
 import org.switchyard.deploy.event.ApplicationDeployedEvent;
@@ -32,6 +25,9 @@ import org.switchyard.deploy.event.ApplicationUndeployedEvent;
 import org.switchyard.deploy.internal.AbstractDeployment;
 import org.switchyard.event.EventObserver;
 import org.switchyard.runtime.event.ExchangeCompletionEvent;
+
+import javax.xml.namespace.QName;
+import java.util.EventObject;
 
 /**
  * SwitchYardBuilder
@@ -135,30 +131,64 @@ public class SwitchYardBuilder implements EventObserver {
         // Recording metrics at multiple levels at this point instead of
         // aggregating them.
         Exchange exchange = event.getExchange();
-        QName serviceName = exchange.getProvider().getName();
+        QName providerName = exchange.getProvider().getName();
+        QName componentName = ComponentNames.unqualifyComponent(exchange.getConsumer().getName());
+        QName componentServiceName = getComponentServiceName(componentName, exchange);
         QName referenceName = ComponentNames.unqualify(exchange.getConsumer().getName());
         for (Service service : _switchYard.getServices()) {
-            if (service.getName().equals(serviceName)) {
+            if (service.getName().equals(providerName)) {
                 // 1 - the aggregate switchyard stats
                 _switchYard.recordMetrics(exchange);
                 
                 // 2 - service stats
                 service.recordMetrics(exchange);
             }
-            // 3 - reference stats
-            // XXX: this looks like it lumps the stats into every component reference with a matching name
-            for (ComponentReference reference : service.getPromotedService().getReferences()) {
-                if (reference.getName().equals(referenceName)) {
-                    ((BaseComponentReference)reference).recordMetrics(exchange);
+        }
+
+        for (ComponentService componentService : _switchYard.getComponentServices()) {
+            if (componentService.getName().equals(providerName)) {
+                // 3 - component service stats
+                componentService.recordMetrics(exchange);
+            }
+
+            if (componentService.getName().equals(componentServiceName)) {
+                // 4 - component reference stats
+                for (ComponentReference reference : componentService.getReferences()) {
+                    if (reference.getName().equals(referenceName)) {
+                        reference.recordMetrics(exchange);
+                    }
                 }
             }
         }
-        // 4 - reference stats
+
+        // 5 - reference stats
         for (Reference reference : _switchYard.getReferences()) {
-            if (reference.getName().equals(referenceName)) {
+            if (reference.getName().equals(providerName)) {
                 reference.recordMetrics(exchange);
                 break;
             }
         }
+    }
+
+    private QName getComponentServiceName(QName componentName, Exchange exchange) {
+        Application application = _switchYard.getApplication(exchange.getConsumer().getDomain().getName());
+        if (application == null) {
+            return componentName;
+        }
+
+        if (application.getConfig().getComposite() == null) {
+            return componentName;
+        }
+
+        for (ComponentModel component : application.getConfig().getComposite().getComponents()) {
+            if (component.getQName().equals(componentName)) {
+                if (component.getServices().size() != 1) {
+                    return componentName;
+                } else {
+                    return component.getServices().get(0).getQName();
+                }
+            }
+        }
+        return componentName;
     }
 }

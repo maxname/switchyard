@@ -14,24 +14,13 @@
 
 package org.switchyard.admin.base;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import org.switchyard.admin.*;
+import org.switchyard.common.version.Versions;
 
 import javax.xml.namespace.QName;
-
-import org.switchyard.admin.Application;
-import org.switchyard.admin.Component;
-import org.switchyard.admin.Reference;
-import org.switchyard.admin.Service;
-import org.switchyard.admin.SwitchYard;
-import org.switchyard.common.version.Versions;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * In-memory representation of System admin contract. Note that Service objects
@@ -44,6 +33,7 @@ public class BaseSwitchYard extends BaseMessageMetricsAware implements SwitchYar
     private final String _version;
     private ConcurrentMap<QName, Application> _applications = new ConcurrentHashMap<QName, Application>();
     private ConcurrentMap<String, Component> _components = new ConcurrentHashMap<String, Component>();
+    private List<ComponentService> _componentServices = Collections.synchronizedList(new LinkedList<ComponentService>());
     private List<Service> _services = Collections.synchronizedList(new LinkedList<Service>());
     private List<Reference> _references = Collections.synchronizedList(new LinkedList<Reference>());
     private Set<String> _socketBindingNames = Collections.synchronizedSet(new HashSet<String>());
@@ -72,6 +62,7 @@ public class BaseSwitchYard extends BaseMessageMetricsAware implements SwitchYar
         if (existing == null) {
             _services.addAll(application.getServices());
             _references.addAll(application.getReferences());
+            _componentServices.addAll(application.getComponentServices());
         }
         return this;
     }
@@ -95,6 +86,7 @@ public class BaseSwitchYard extends BaseMessageMetricsAware implements SwitchYar
     public BaseSwitchYard removeApplication(QName name) {
         Application application = _applications.remove(name);
         if (application != null) {
+            _componentServices.remove(application.getComponentServices());
             _references.removeAll(application.getReferences());
             _services.removeAll(application.getServices());
         }
@@ -179,6 +171,30 @@ public class BaseSwitchYard extends BaseMessageMetricsAware implements SwitchYar
      */
     public BaseSwitchYard removeReference(Reference reference) {
         _references.remove(reference);
+        return this;
+    }
+
+    public List<ComponentService> getComponentServices() {
+        return new ArrayList<ComponentService>(_componentServices);
+    }
+
+    /**
+     * Add a component service
+     * @param componentService componentService to add
+     * @return reference to this admin object
+     */
+    public BaseSwitchYard addComponentService(ComponentService componentService) {
+        _componentServices.add(componentService);
+        return this;
+    }
+
+    /**
+     * Remove a component service
+     * @param componentService componentService to remove
+     * @return reference to this admin object
+     */
+    public BaseSwitchYard removeComponentService(ComponentService componentService) {
+        _componentServices.remove(componentService);
         return this;
     }
 

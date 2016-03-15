@@ -73,4 +73,18 @@ public final class ComponentNames {
         }
         return refName;
     }
+
+    /**
+     * Return an unqualified name from the given service reference name, removing the name of the
+     * reference component.
+     * @param refName service reference name
+     * @return name without service component name included
+     */
+    public static QName unqualifyComponent(QName refName) {
+        if (refName.getLocalPart().contains("/")) {
+            String name = refName.getLocalPart().split("/")[0];
+            refName = new QName(refName.getNamespaceURI(), name);
+        }
+        return refName;
+    }
 }

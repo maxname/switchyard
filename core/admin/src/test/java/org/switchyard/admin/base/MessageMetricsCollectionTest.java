@@ -14,12 +14,6 @@
 
 package org.switchyard.admin.base;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import javax.xml.namespace.QName;
-
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.switchyard.Exchange;
@@ -28,6 +22,12 @@ import org.switchyard.Property;
 import org.switchyard.admin.ComponentService;
 import org.switchyard.deploy.ComponentNames;
 import org.switchyard.runtime.event.ExchangeCompletionEvent;
+
+import javax.xml.namespace.QName;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Test of message metrics collection on various levels.
@@ -79,6 +79,7 @@ public class MessageMetricsCollectionTest extends SwitchYardBuilderTestBase {
     private void defaultExpectations(Exchange ex) {
         when(ex.getProvider().getName()).thenReturn(TEST_SERVICE);
         when(ex.getConsumer().getName()).thenReturn(TEST_REFERENCE);
+        when(ex.getConsumer().getDomain().getName()).thenReturn(TEST_APP);
         when(ex.getState()).thenReturn(ExchangeState.OK);
         Property property = mock(Property.class);
         when(property.getValue()).thenReturn(new Long(10));
