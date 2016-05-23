@@ -204,6 +204,8 @@ public class OutboundHandler extends BaseServiceHandler {
                     }
                 }
 
+                client.setThreadLocalRequestContext(true);
+
             } catch (MalformedURLException e) {
                 throw new WebServiceConsumeException(e);
             } catch (WSDLException wsdle) {
