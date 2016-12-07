@@ -206,6 +206,15 @@ public class OutboundHandler extends BaseServiceHandler {
 
                 client.setThreadLocalRequestContext(true);
 
+                LOGGER.info("setup Allow Chunking to false");
+                if (conduit.getClient() != null) {
+                    conduit.getClient().setAllowChunking(false);
+                } else {
+                    HTTPClientPolicy httpClientPolicy = new HTTPClientPolicy();
+                    httpClientPolicy.setAllowChunking(false);
+                    conduit.setClient(httpClientPolicy);
+                }
+
             } catch (MalformedURLException e) {
                 throw new WebServiceConsumeException(e);
             } catch (WSDLException wsdle) {
