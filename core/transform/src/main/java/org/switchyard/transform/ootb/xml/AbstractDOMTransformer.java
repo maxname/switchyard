@@ -18,6 +18,7 @@ import org.jboss.logging.Logger;
 import org.switchyard.transform.BaseTransformer;
 import org.switchyard.transform.internal.TransformLogger;
 import org.switchyard.transform.internal.TransformMessages;
+import org.switchyard.transform.pool.PooledStringWriter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
@@ -26,18 +27,12 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.io.StringWriter;
 
 /**
  * Abstract DOM transformer.
@@ -140,14 +135,16 @@ public abstract class AbstractDOMTransformer<F, T> extends BaseTransformer<F, T>
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xalan}indent-amount", "4");
 
-        StringWriter writer = new StringWriter();
+        PooledStringWriter writer = new PooledStringWriter();
 
         try {
             transformer.transform(new DOMSource(node), new StreamResult(writer));
+            return writer.toString();
         } catch (TransformerException e) {
             throw TransformMessages.MESSAGES.errorSerializingDOMNode(e);
+        } finally {
+            writer.dispose();
         }
 
-        return writer.toString();
     }
 }

@@ -35,12 +35,14 @@
             org.switchyard.transform.ootb.*;
             org.switchyard.transform.smooks.*;
             org.switchyard.transform.xslt.*;
+            org.switchyard.transform.pool.*;
             org.switchyard.transform.osgi.internal.*;
         </switchyard.osgi.export.pkg>
         <switchyard.osgi.import>
             org.dozer.*;resolution:=optional,
             org.milyn.*;resolution:=optional,
             org.mvel2.*;resolution:=optional,
+            org.apache.commons.pool.*;resolution:=required,
             javax.enterprise.inject.spi;resolution:=optional,
             org.switchyard.common.cdi;resolution:=optional;${switchyard.osgi.import.switchyard.version},
             org.switchyard.config.model;org.switchyard.*;${switchyard.osgi.import.switchyard.version},
@@ -96,6 +98,10 @@
         <dependency>
             <groupId>net.sf.dozer</groupId>
             <artifactId>dozer</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-pool</groupId>
+            <artifactId>commons-pool</artifactId>
         </dependency>
         <dependency>
             <groupId>org.switchyard</groupId>

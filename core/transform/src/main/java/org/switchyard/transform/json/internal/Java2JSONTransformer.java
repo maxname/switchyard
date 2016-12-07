@@ -14,15 +14,14 @@
 
 package org.switchyard.transform.json.internal;
 
-import java.io.IOException;
-import java.io.StringWriter;
-
-import javax.xml.namespace.QName;
-
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.switchyard.transform.BaseTransformer;
 import org.switchyard.transform.internal.TransformMessages;
+import org.switchyard.transform.pool.PooledStringWriter;
+
+import javax.xml.namespace.QName;
+import java.io.IOException;
 
 /**
  * Java to JSON Transformer.
@@ -54,9 +53,8 @@ public class Java2JSONTransformer<F, T> extends BaseTransformer<Object, String> 
     @Override
     public String transform(Object from) {
 
+        PooledStringWriter writer = new PooledStringWriter();
         try {
-            StringWriter writer = new StringWriter();
-
             if (_clazz.isInstance(from)) {
                 _mapper.writeValue(writer, from);
                 return writer.toString();
@@ -67,6 +65,8 @@ public class Java2JSONTransformer<F, T> extends BaseTransformer<Object, String> 
             throw TransformMessages.MESSAGES.unexpectedJSONProcessingException(e);
         } catch (IOException e) {
             throw TransformMessages.MESSAGES.unexpectedIOException(e);
+        } finally {
+            writer.dispose();
         }
     }
 }

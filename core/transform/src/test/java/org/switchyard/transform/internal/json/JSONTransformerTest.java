@@ -43,6 +43,7 @@ import org.switchyard.transform.internal.json.User.Name;
 import org.switchyard.transform.json.internal.JSON2JavaTransformer;
 import org.switchyard.transform.json.internal.JSONTransformFactory;
 import org.switchyard.transform.json.internal.Java2JSONTransformer;
+import org.switchyard.transform.pool.StringBuffersPool;
 
 /**
  * @author Alejandro Montenegro &lt;<href="mailto:aamonten@gmail.com">aamonten@gmail.com</a>&gt;
@@ -56,7 +57,7 @@ public class JSONTransformerTest {
     private TransformerRegistry xformReg;
 
     public JSONTransformerTest() {
-        xformReg = new BaseTransformerRegistry();
+        xformReg = (TransformerRegistry) new BaseTransformerRegistry();
         new TransformerRegistryLoader(xformReg).loadOOTBTransforms();
     }
 
@@ -68,6 +69,16 @@ public class JSONTransformerTest {
 			Object expected = toObject(JSON_PERSON, Person.class);
 			Object result = toObject((String)transformer.transform(new Person("Alejandro", 31)), Person.class);
 			assertEquals(expected, result);
+
+			expected = toObject(JSON_PERSON, Person.class);
+			result = toObject((String)transformer.transform(new Person("Alejandro", 31)), Person.class);
+			assertEquals(expected, result);
+
+			expected = toObject(JSON_PERSON, Person.class);
+			result = toObject((String)transformer.transform(new Person("Alejandro", 31)), Person.class);
+			assertEquals(expected, result);
+
+			assertEquals(0, StringBuffersPool.INSTANCE.borrowObject().length());
 
 		} catch (Exception e) {
 			Assert.fail("caught an exception " + e.getMessage());

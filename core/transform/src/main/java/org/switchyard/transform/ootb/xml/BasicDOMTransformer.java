@@ -15,6 +15,7 @@
 package org.switchyard.transform.ootb.xml;
 
 import org.switchyard.config.model.Scannable;
+import org.switchyard.transform.pool.PooledStringWriter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -25,12 +26,10 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.StringWriter;
 
 /**
  * Basic DOM transformations.
@@ -145,14 +144,16 @@ public class BasicDOMTransformer extends AbstractDOMTransformer {
                 return null;
             }
         } else if (getTo().equals(TYPE_STRING)) {
-            StringWriter writer = new StringWriter();
+            PooledStringWriter writer = new PooledStringWriter();
             StreamResult result = new StreamResult(writer);
             try {
                 TransformerFactory.newInstance().newTransformer().transform(source, result);
+                return writer.toString();
             } catch (TransformerException e) {
                 return null;
+            } finally {
+                writer.dispose();
             }
-            return writer.toString();
         } else if (getTo().equals(TYPE_INPUTSOURCE)) {
             return new InputSource(new StringReader(serialize(source.getNode())));
         } else {

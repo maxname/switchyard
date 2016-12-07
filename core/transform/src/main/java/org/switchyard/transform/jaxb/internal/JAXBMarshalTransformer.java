@@ -14,19 +14,18 @@
 
 package org.switchyard.transform.jaxb.internal;
 
-import java.io.StringWriter;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.namespace.QName;
-
 import org.switchyard.Message;
 import org.switchyard.SwitchYardException;
 import org.switchyard.common.xml.QNameUtil;
 import org.switchyard.config.model.Scannable;
 import org.switchyard.transform.BaseTransformer;
 import org.switchyard.transform.internal.TransformMessages;
+import org.switchyard.transform.pool.PooledStringWriter;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.namespace.QName;
 
 /**
  * JAXB Marshalling transformer.
@@ -71,8 +70,8 @@ public class JAXBMarshalTransformer<F, T> extends BaseTransformer<Message, Messa
             throw TransformMessages.MESSAGES.failedToCreateMarshaller(getFrom().toString(), e);
         }
 
+        PooledStringWriter resultWriter = new PooledStringWriter();
         try {
-            StringWriter resultWriter = new StringWriter();
             Object javaObject = message.getContent();
             //JAXBElement jaxbElement = new JAXBElement(getTo(), QNameUtil.toJavaMessageType(getFrom()), javaObject);
 
@@ -82,6 +81,8 @@ public class JAXBMarshalTransformer<F, T> extends BaseTransformer<Message, Messa
             message.setContent(resultWriter.toString());
         } catch (JAXBException e) {
             throw TransformMessages.MESSAGES.failedToMarshallForType(getFrom().toString(), e);
+        } finally {
+            resultWriter.dispose();
         }
 
         return message;
